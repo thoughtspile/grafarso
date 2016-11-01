@@ -30,13 +30,6 @@ class GrafarSync {
     if (this.role !== ROLES.sender) {
       return;
     }
-
-    try {
-      JSON.stringify(args);
-    } catch(err) {
-      console.warn('grafarso:', args, 'is not serializable');
-    }
-
     this.socket.emit('plot-data', { id, args });
   }
 

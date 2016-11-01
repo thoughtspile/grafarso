@@ -12,19 +12,28 @@
     <script src='/build/grafarso.js'></script>
 
     <script>
+      // Подключиться в режиме преподавателя (grafarso.from -- в режиме студента)
       grafarso.to('http://visualmath.ru:8632/');
 
+      // все как обычно
       const p = grafar.constant(0).select();
       const x = grafar.range(-2, 2, 500).select();
       const y = grafar.map([x, p], (x, p) => 2 * Math.sin(x + p));
       const pan = new grafar.Panel(document.getElementById('render')).setAxes(['x', 'y']);
       grafar.pin([x, y], pan);
 
+      // Синхронизировать панель: registerPan(<id>, <Panel>), id -- уникальный идентификатор.
       grafarso.registerPan('pan2d', pan);
 
       const control = document.getElementById('ctrl__p');
 
-
+      // Синхронизируем обновление. То же самое, id и функция. Важное:
+      //   1. Разделить обновление и получение значений из интерфейса:
+      //     отдельная функция (тут -- updateHandler) вытаскивает значения и
+      //     передает обернутой.
+      //   2. Среди аргументов не может быть функций, потому что функции не
+      //     сериализуются.
+      //   3. Нужно вызывать функцию, которую возвращает register.
       const update = grafarso.register('upd-p', (val) => {
         grafar.constant(val).into(p);
       });
