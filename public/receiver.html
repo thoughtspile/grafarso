@@ -5,12 +5,34 @@
     <title></title>
   </head>
   <body>
-    hello
-    <script src="/socket.io.js"></script>
+    <div id='render' style='width:400px; height:400px'></div>
+    <input type='number' id='ctrl__p' value='0' step='0.05'></input>
+
+    <script src='/grafar.js'></script>
     <script src='/build/grafarso.js'></script>
+
     <script>
       grafarso.from('http://visualmath.ru:8632/');
-      const update = grafarso.register('hello', (val) => console.log(val));
+
+      const p = grafar.constant(0).select();
+      const x = grafar.range(-2, 2, 500).select();
+      const y = grafar.map([x, p], (x, p) => 2 * Math.sin(x + p));
+      const pan = new grafar.Panel(document.getElementById('render')).setAxes(['x', 'y']);
+      grafar.pin([x, y], pan);
+
+      grafarso.registerPan('pan2d', pan);
+
+      const control = document.getElementById('ctrl__p');
+
+      
+      const update = grafarso.register('upd-p', (val) => {
+        grafar.constant(val).into(p);
+      });
+      const updateHandler = () => update(Number(control.value));
+
+
+      control.addEventListener('input', updateHandler);
+      updateHandler();
     </script>
   </body>
 </html>

@@ -13,7 +13,6 @@ class GrafarSync {
     this.socket = io(path);
     this.role = role;
 
-    this.socket.on('connect', () => console.info('grafarso connected'));
     this.socket.on('error', err => console.warn('grafarso socket error', err));
 
     if (this.role === 'receiver') {
@@ -32,7 +31,6 @@ class GrafarSync {
       console.warn('grafarso:', args, 'is not serializable');
     }
 
-    console.log('send', {id, args});
     this.socket.emit('plot-data', { id, args });
   }
 
@@ -56,9 +54,31 @@ class GrafarSync {
     this.callbacks[id] = callback;
 
     return (...args) => {
-      this.send(id, args);
+      // если отправка ломается, обернутая функция все равно вызывается
+      setTimeout(() => this.send(id, args), 0);
       return callback(...args);
     }
+  }
+
+  registerPan(id, pan) {
+    const genericId = `___pan___${ id }`;
+    if (this.role === 'sender') {
+      const dummySetter = this.register(genericId, matrix => {});
+
+      let lastPos = [];
+      const testPanel = () => {
+        const pos = pan.camera.position.toArray();
+        if (pos.some((c, i) => c !== lastPos[i])) {
+          dummySetter(pos);
+        }
+        lastPos = pos;
+        window.requestAnimationFrame(testPanel);
+      };
+      testPanel();
+    } else if (this.role === 'receiver') {
+      this.register(genericId, pos => pan.camera.position.fromArray(pos));
+    }
+    return pan;
   }
 }
 
