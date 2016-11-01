@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    hello
+    <script src="/socket.io.js"></script>
+    <script src='/build/grafarso.js'></script>
+    <script>
+      grafarso.to('http://visualmath.ru:8632/');
+      const update = grafarso.register('hello', (val) => console.log(val));
+      setTimeout(() => update(5), 3000);
+    </script>
+  </body>
+</html>
