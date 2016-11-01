@@ -1,4 +1,10 @@
 import io from 'socket.io-client';
+import watchPanel from './watchPanel';
+
+export const ROLES = {
+  receiver: 'receiver',
+  sender: 'sender',
+};
 
 class GrafarSync {
   constructor() {
@@ -7,7 +13,7 @@ class GrafarSync {
 
   connect(path, role) {
     if (this.socket) {
-      console.warn('grafarso cannot reconnect');
+      console.warn('grafarso: cannot reconnect');
     }
 
     this.socket = io(path);
@@ -15,13 +21,13 @@ class GrafarSync {
 
     this.socket.on('error', err => console.warn('grafarso socket error', err));
 
-    if (this.role === 'receiver') {
+    if (this.role === ROLES.receiver) {
       this.socket.on('plot-data', payload => this.receive(payload));
     }
   }
 
   send(id, args) {
-    if (this.role !== 'sender') {
+    if (this.role !== ROLES.sender) {
       return;
     }
 
@@ -35,8 +41,7 @@ class GrafarSync {
   }
 
   receive(payload) {
-    if (this.role !== 'receiver') {
-      console.warn('grafarso sender cannot receive');
+    if (this.role !== ROLES.receiver) {
       return;
     }
     if (!this.callbacks[payload.id]) {
@@ -62,20 +67,10 @@ class GrafarSync {
 
   registerPan(id, pan) {
     const genericId = `___pan___${ id }`;
-    if (this.role === 'sender') {
+    if (this.role === ROLES.sender) {
       const dummySetter = this.register(genericId, matrix => {});
-
-      let lastPos = [];
-      const testPanel = () => {
-        const pos = pan.camera.position.toArray();
-        if (pos.some((c, i) => c !== lastPos[i])) {
-          dummySetter(pos);
-        }
-        lastPos = pos;
-        window.requestAnimationFrame(testPanel);
-      };
-      testPanel();
-    } else if (this.role === 'receiver') {
+      watchPanel(pan, dummySetter);
+    } else if (this.role === ROLES.receiver) {
       this.register(genericId, pos => pan.camera.position.fromArray(pos));
     }
     return pan;

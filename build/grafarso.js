@@ -68,10 +68,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	var from = exports.from = function from(path) {
-	  return _GrafarSync2.default.connect(path, 'receiver');
+	  return _GrafarSync2.default.connect(path, _GrafarSync.ROLES.receiver);
 	};
 	var to = exports.to = function to(path) {
-	  return _GrafarSync2.default.connect(path, 'sender');
+	  return _GrafarSync2.default.connect(path, _GrafarSync.ROLES.sender);
 	};
 	var register = exports.register = function register(id, fn) {
 	  return _GrafarSync2.default.register(id, fn);
@@ -89,6 +89,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.ROLES = undefined;
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -96,11 +97,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _socket2 = _interopRequireDefault(_socket);
 
+	var _watchPanel = __webpack_require__(49);
+
+	var _watchPanel2 = _interopRequireDefault(_watchPanel);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var ROLES = exports.ROLES = {
+	  receiver: 'receiver',
+	  sender: 'sender'
+	};
 
 	var GrafarSync = function () {
 	  function GrafarSync() {
@@ -115,7 +125,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var _this = this;
 
 	      if (this.socket) {
-	        console.warn('grafarso cannot reconnect');
+	        console.warn('grafarso: cannot reconnect');
 	      }
 
 	      this.socket = (0, _socket2.default)(path);
@@ -125,7 +135,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return console.warn('grafarso socket error', err);
 	      });
 
-	      if (this.role === 'receiver') {
+	      if (this.role === ROLES.receiver) {
 	        this.socket.on('plot-data', function (payload) {
 	          return _this.receive(payload);
 	        });
@@ -134,7 +144,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'send',
 	    value: function send(id, args) {
-	      if (this.role !== 'sender') {
+	      if (this.role !== ROLES.sender) {
 	        return;
 	      }
 
@@ -151,8 +161,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function receive(payload) {
 	      var _callbacks;
 
-	      if (this.role !== 'receiver') {
-	        console.warn('grafarso sender cannot receive');
+	      if (this.role !== ROLES.receiver) {
 	        return;
 	      }
 	      if (!this.callbacks[payload.id]) {
@@ -187,27 +196,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'registerPan',
 	    value: function registerPan(id, pan) {
-	      var _this3 = this;
-
 	      var genericId = '___pan___' + id;
-	      if (this.role === 'sender') {
-	        (function () {
-	          var dummySetter = _this3.register(genericId, function (matrix) {});
-
-	          var lastPos = [];
-	          var testPanel = function testPanel() {
-	            var pos = pan.camera.position.toArray();
-	            if (pos.some(function (c, i) {
-	              return c !== lastPos[i];
-	            })) {
-	              dummySetter(pos);
-	            }
-	            lastPos = pos;
-	            window.requestAnimationFrame(testPanel);
-	          };
-	          testPanel();
-	        })();
-	      } else if (this.role === 'receiver') {
+	      if (this.role === ROLES.sender) {
+	        var dummySetter = this.register(genericId, function (matrix) {});
+	        (0, _watchPanel2.default)(pan, dummySetter);
+	      } else if (this.role === ROLES.receiver) {
 	        this.register(genericId, function (pos) {
 	          return pan.camera.position.fromArray(pos);
 	        });
@@ -7671,6 +7664,31 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	Backoff.prototype.setJitter = function (jitter) {
 	  this.jitter = jitter;
+	};
+
+/***/ },
+/* 49 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	exports.default = function (pan, cb) {
+	  var lastPos = [];
+	  var testPanel = function testPanel() {
+	    var pos = pan.camera.position.toArray();
+	    if (pos.some(function (c, i) {
+	      return c !== lastPos[i];
+	    })) {
+	      cb(pos);
+	    }
+	    lastPos = pos;
+	    window.requestAnimationFrame(testPanel);
+	  };
+	  testPanel();
 	};
 
 /***/ }
