@@ -17,10 +17,11 @@
 
       // все как обычно
       const p = grafar.constant(0).select();
-      const x = grafar.range(-2, 2, 500).select();
-      const y = grafar.map([x, p], (x, p) => 2 * Math.sin(x + p));
-      const pan = new grafar.Panel(document.getElementById('render')).setAxes(['x', 'y']);
-      grafar.pin([x, y], pan);
+      const x = grafar.range(-2, 2, 100).select();
+      const y = grafar.range(-2, 2, 100).select();
+      const z = grafar.map([x, y, p], (x, y, p) => 2 * Math.sin(x * Math.sin(y) + p));
+      const pan = new grafar.Panel(document.getElementById('render'));
+      grafar.pin([x, y, z], pan);
 
       // Синхронизировать панель: registerPan(<id>, <Panel>), id -- уникальный идентификатор.
       grafarso.registerPan('pan2d', pan);
