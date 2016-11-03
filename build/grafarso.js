@@ -97,9 +97,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _socket2 = _interopRequireDefault(_socket);
 
-	var _watchPanel = __webpack_require__(49);
-
-	var _watchPanel2 = _interopRequireDefault(_watchPanel);
+	var _syncPanel = __webpack_require__(50);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -192,11 +190,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var genericId = '___pan___' + id;
 	      if (this.role === ROLES.sender) {
 	        var dummySetter = this.register(genericId, function (matrix) {});
-	        (0, _watchPanel2.default)(pan, dummySetter);
+	        (0, _syncPanel.watchPanel)(pan, dummySetter);
 	      } else if (this.role === ROLES.receiver) {
-	        this.register(genericId, function (pos) {
-	          return pan.camera.position.fromArray(pos);
-	        });
+	        this.register(genericId, _syncPanel.setPanel);
 	      }
 	      return pan;
 	    }
@@ -7660,7 +7656,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 49 */
+/* 49 */,
+/* 50 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -7668,20 +7665,37 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	var panelStatesEqual = function panelStatesEqual(state1, state2) {
+	  return Object.keys(state1).every(function (key) {
+	    return state1[key].every(function (c, i) {
+	      return c === state2[key][i];
+	    });
+	  });
+	};
 
-	exports.default = function (pan, cb) {
-	  var lastPos = [];
+	var watchPanel = exports.watchPanel = function watchPanel(pan, cb) {
+	  var lastState = {
+	    position: [],
+	    target: []
+	  };
+
 	  var testPanel = function testPanel() {
-	    var pos = pan.camera.position.toArray();
-	    if (pos.some(function (c, i) {
-	      return c !== lastPos[i];
-	    })) {
-	      cb(pos);
+	    var state = {
+	      position: pan.camera.position.toArray(),
+	      target: pan.controls.target.toArray()
+	    };
+	    if (!panelStatesEqual(lastState, state)) {
+	      cb(state);
 	    }
-	    lastPos = pos;
+	    lastState = state;
 	    window.requestAnimationFrame(testPanel);
 	  };
 	  testPanel();
+	};
+
+	var setPanel = exports.setPanel = function setPanel(state) {
+	  pan.camera.position.fromArray(state.position);
+	  pan.controls.target.fromArray(state.target);
 	};
 
 /***/ }

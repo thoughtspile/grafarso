@@ -1,5 +1,5 @@
 import io from 'socket.io-client';
-import watchPanel from './watchPanel';
+import {watchPanel, setPanel} from './syncPanel';
 
 export const ROLES = {
   receiver: 'receiver',
@@ -64,7 +64,7 @@ class GrafarSync {
       const dummySetter = this.register(genericId, matrix => {});
       watchPanel(pan, dummySetter);
     } else if (this.role === ROLES.receiver) {
-      this.register(genericId, pos => pan.camera.position.fromArray(pos));
+      this.register(genericId, setPanel);
     }
     return pan;
   }
